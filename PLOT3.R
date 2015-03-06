@@ -4,13 +4,14 @@ require(ggplot2)
 NEI <- readRDS("data/summarySCC_PM25.rds")
 SCC <- readRDS("data/Source_Classification_Code.rds")
 
-# Samples data for testing
-NEIsample <- NEI[sample(nrow(NEI), size = 5000, replace = F), ]
+# Coal-related SCC
+SCC.coal = SCC[grepl("coal", SCC$Short.Name, ignore.case = TRUE), ]
 
-# Baltimore City, Maryland == fips
-MD <- subset(NEI, fips == 24510)
-MD$year <- factor(MD$year, levels = c('1999', '2002', '2005', '2008'))
+# Merges two data sets
+merge <- merge(x = NEI, y = SCC.coal, by = 'SCC')
+merge.sum <- aggregate(merge[, 'Emissions'], by = list(merge$year), sum)
+colnames(merge.sum) <- c('Year', 'Emissions')
 
-png('plot3.png', width = 800, height = 500, units = 'px')
-ggplot(data = MD, aes(x = year, y = log(Emissions))) + facet_grid(. ~ type) + guides(fill = F) + geom_boxplot(aes(fill = type)) + stat_boxplot(geom = 'errorbar') + ylab(expression(paste('Log', ' of PM'[2.5], ' Emissions'))) + xlab('Year') + ggtitle('Emissions per Type in Baltimore City, Maryland') + geom_jitter(alpha = 0.10)
+png(filename = 'plot4.png')
+ggplot(data = merge.sum, aes(x = Year, y = Emissions / 1000)) + geom_line(aes(group = 1, col = Emissions)) + geom_point(aes(size = 2, col = Emissions)) + ggtitle(expression('Total Emissions of PM'[2.5])) + ylab(expression(paste('PM', ''[2.5], ' in kilotons'))) + geom_text(aes(label = round(Emissions / 1000, digits = 2), size = 2, hjust = 1.5, vjust = 1.5)) + theme(legend.position = 'none') + scale_colour_gradient(low = 'black', high = 'red')
 dev.off()
