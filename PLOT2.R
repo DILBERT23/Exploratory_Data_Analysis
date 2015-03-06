@@ -1,18 +1,13 @@
-## Getting full dataset
-data_full <- read.csv("./Data/household_power_consumption.txt", header=T, sep=';', na.strings="?", 
-                      nrows=2075259, check.names=F, stringsAsFactors=F, comment.char="", quote='\"')
-data_full$Date <- as.Date(data_full$Date, format="%d/%m/%Y")
+# Loads RDS
+NEI <- readRDS("data/summarySCC_PM25.rds")
+SCC <- readRDS("data/Source_Classification_Code.rds")
 
-## Subsetting the data
-data <- subset(data_full, subset=(Date >= "2007-02-01" & Date <= "2007-02-02"))
-rm(data_full)
+# Samples data for testing
+NEIsample <- NEI[sample(nrow(NEI), size = 5000, replace = F), ]
 
-## Converting dates
-datetime <- paste(as.Date(data$Date), data$Time)
-data$Datetime <- as.POSIXct(datetime)
+# Subsets data and appends two years in one data frame
+MD <- subset(NEI, fips == '24510')
 
-## Plot 2
-plot(data$Global_active_power~data$Datetime, type="l",
-     ylab="Global Active Power (kilowatts)", xlab="")
-dev.copy(png, file="plot2.png", height=480, width=480)
+png(filename = 'plot2.png')
+barplot(tapply(X = MD$Emissions, INDEX = MD$year, FUN = sum), main = 'Total Emission in Baltimore City, MD', xlab = 'Year', ylab = expression('PM'[2.5]))
 dev.off()
